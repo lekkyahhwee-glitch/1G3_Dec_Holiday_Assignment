@@ -368,7 +368,10 @@ function poly(terms){ // [[coef,'x^{2}'],...] -> "3x^{2} − 5x + 4"
 }
 function parseStudentNumber(raw){
   if(raw==null) return NaN;
-  let s=String(raw).trim().replace(/[−‒–—―﹣－]/g,'-').replace(/\s+/g,'');
+  let s=String(raw).trim().replace(/[−‒–—―﹣－]/g,'-');
+  const mx=s.match(/^([-+]?)(\d+)\s+(\d+)\s*\/\s*(\d+)$/); // mixed number like 12 3/4
+  if(mx){const d=parseFloat(mx[4]);if(d===0)return NaN;const v=parseFloat(mx[2])+parseFloat(mx[3])/d;return mx[1]==='-'?-v:v;}
+  s=s.replace(/\s+/g,'');
   if(/^-?\d+,\d+$/.test(s)) s=s.replace(',','.');
   const fm=s.match(/^([-+]?\d+(?:\.\d+)?)\/([-+]?\d+(?:\.\d+)?)$/);
   if(fm){const d=parseFloat(fm[2]);return d===0?NaN:parseFloat(fm[1])/d;}
@@ -629,7 +632,7 @@ const PAIRS=[['x','y'],['p','q'],['a','b'],['m','n']];
 const MULT=[[2,'twice'],[3,'thrice'],[4,'four times'],[5,'five times']];
 const POW=[[2,'square'],[3,'cube']];
 const pick=(rng,a)=>a[Math.floor(rng()*a.length)];
-const sg=v=>v<0?'('+nf(v)+')':String(v);                      // bracket negatives when substituting
+const sg=v=>'('+nf(v)+')';                                    // always bracket a substituted value
 
 Object.assign(QUESTS,{
 /* ---------------- WEEK 1 DAY 1 ---------------- */
@@ -685,7 +688,7 @@ Object.assign(QUESTS,{
     return {prompt:`Find the value of ${poly([[a,'x^{2}'],[b,'x'],[c,'']])} when x = ${nf(x)}.`,
       tpl:['Value = ',{b:0}],ans:[v],note:'Type a negative number if needed.',
       hint:`Put (${nf(x)}) in place of every x. What is (${nf(x)})^{2}: positive or negative?`,
-      solution:[`${a}(${nf(x)})^{2} ${b<0?'−':'+'} ${Math.abs(b)}(${nf(x)}) ${c<0?'−':'+'} ${Math.abs(c)}`,`= ${a}(${x*x}) ${b*x<0?'−':'+'} ${Math.abs(b*x)} ${c<0?'−':'+'} ${Math.abs(c)}`,`= ${a*x*x} ${b*x<0?'−':'+'} ${Math.abs(b*x)} ${c<0?'−':'+'} ${Math.abs(c)}`,`= ${nf(v)}`],space:36};
+      solution:[`${a}(${nf(x)})^{2} ${b<0?'−':'+'} ${Math.abs(b)===1?'':Math.abs(b)}(${nf(x)}) ${c<0?'−':'+'} ${Math.abs(c)}`,`= ${a}(${x*x}) ${b*x<0?'−':'+'} ${Math.abs(b*x)} ${c<0?'−':'+'} ${Math.abs(c)}`,`= ${a*x*x} ${b*x<0?'−':'+'} ${Math.abs(b*x)} ${c<0?'−':'+'} ${Math.abs(c)}`,`= ${nf(v)}`],space:36};
   }},
   {type:'boxes',key:'q2',skill:'Two letters',gen:(rng)=>{
     const a=ri(rng,2,6),b=ri(rng,2,5);let p=ri(rng,-5,5);if(p===0)p=-2;let q=ri(rng,-4,4);if(q===0)q=3;
@@ -723,13 +726,13 @@ Object.assign(QUESTS,{
   })},
   {type:'boxes',key:'q1',skill:'Collect like terms',eoy:'EOY P1 Q11',gen:(rng)=>{
     let a,b,c,d;do{a=ri(rng,-9,9);b=ri(rng,-9,9);c=ri(rng,-9,9);d=ri(rng,-9,9);}while(!a||!b||!c||!d||a+c===0||b+d===0||a<0);
-    return {prompt:`Simplify ${poly([[a,'x'],[b,'y'],[c,'x'],[d,'y']])}.`,tpl:[{b:0},'x + ',{b:1},'y'],ans:[a+c,b+d],note:'Type a negative number if needed.',
+    return {prompt:`Simplify ${poly([[a,'x'],[b,'y'],[c,'x'],[d,'y']])}.`,tpl:[{b:0},'x + ',{b:1},'y'],ans:[a+c,b+d],note:'Type a negative number if needed. Type 1 or −1 if there is no number in front.',
       hint:'Which terms are like terms? Keep each term together with the sign in front of it.',
       solution:[poly([[a,'x'],[b,'y'],[c,'x'],[d,'y']]),`= ${poly([[a,'x'],[c,'x']])} ${b<0?'−':'+'} ${T(Math.abs(b),'y')} ${d<0?'−':'+'} ${T(Math.abs(d),'y')}`,`= ${poly([[a+c,'x'],[b+d,'y']])}`],space:32};
   }},
   {type:'boxes',key:'q2',skill:'x² and x terms',gen:(rng)=>{
     let a,b,c,d;do{a=ri(rng,1,8);b=ri(rng,-9,9);c=ri(rng,-8,8);d=ri(rng,-9,9);}while(!b||!c||!d||a+c===0||b+d===0);
-    return {prompt:`Simplify ${poly([[a,'x^{2}'],[b,'x'],[c,'x^{2}'],[d,'x']])}.`,tpl:[{b:0},'x^{2} + ',{b:1},'x'],ans:[a+c,b+d],note:'Type a negative number if needed.',
+    return {prompt:`Simplify ${poly([[a,'x^{2}'],[b,'x'],[c,'x^{2}'],[d,'x']])}.`,tpl:[{b:0},'x^{2} + ',{b:1},'x'],ans:[a+c,b+d],note:'Type a negative number if needed. Type 1 or −1 if there is no number in front.',
       hint:'Are x^{2} and x like terms? Group the x^{2} terms, then the x terms.',
       solution:[poly([[a,'x^{2}'],[b,'x'],[c,'x^{2}'],[d,'x']]),`x^{2} terms: ${nf(a)} ${c<0?'−':'+'} ${Math.abs(c)} = ${nf(a+c)}`,`x terms: ${nf(b)} ${d<0?'−':'+'} ${Math.abs(d)} = ${nf(b+d)}`,`= ${poly([[a+c,'x^{2}'],[b+d,'x']])}`],space:34};
   }},
@@ -742,7 +745,7 @@ Object.assign(QUESTS,{
   }},
   {type:'boxes',key:'q4',skill:'Terms with xy',gen:(rng)=>{
     let a,b,c,d;do{a=ri(rng,2,9);b=ri(rng,2,9);c=ri(rng,-9,9);d=ri(rng,-9,9);}while(!c||!d||a+c===0||d-b===0);
-    return {prompt:`Simplify ${a}xy − ${b}x ${c<0?'−':'+'} ${T(Math.abs(c),'yx')} ${d<0?'−':'+'} ${T(Math.abs(d),'x')}.`,tpl:[{b:0},'xy + ',{b:1},'x'],ans:[a+c,d-b],note:'Type a negative number if needed.',
+    return {prompt:`Simplify ${a}xy − ${b}x ${c<0?'−':'+'} ${T(Math.abs(c),'yx')} ${d<0?'−':'+'} ${T(Math.abs(d),'x')}.`,tpl:[{b:0},'xy + ',{b:1},'x'],ans:[a+c,d-b],note:'Type a negative number if needed. Type 1 or −1 if there is no number in front.',
       hint:'Which terms have exactly the letters x and y? Which have only x?',
       solution:[`xy terms: ${a} ${c<0?'−':'+'} ${Math.abs(c)} = ${nf(a+c)}`,`x terms: −${b} ${d<0?'−':'+'} ${Math.abs(d)} = ${nf(d-b)}`,`= ${poly([[a+c,'xy'],[d-b,'x']])}`],space:30};
   }}
@@ -790,7 +793,7 @@ Object.assign(QUESTS,{
   }},
   {type:'mcq',key:'q4',skill:'Spot the mistake',thinking:true,gen:(rng)=>{
     const a=ri(rng,2,6),b=ri(rng,2,5),c=ri(rng,2,7);
-    const m=M(rng,[`−${a} × ${c}y should be −${a*c}y`,`−${a} × ${b}x should be +${a*b}x`,`He should add ${a}, not multiply`,`Nothing: his answer is correct`]);
+    const m=M(rng,[`−${a} × ${c}y should be −${a*c}y`,`−${a} × ${b}x should be +${a*b}x`,`−${a} × ${b}x should be −${a+b}x`,`Nothing: his answer is correct`]);
     return {prompt:`Ravi expanded −${a}(${b}x + ${c}y) and got −${a*b}x + ${a*c}y. What went wrong?`,...m,
       hint:`Multiply −${a} by each term yourself. Is (−) × (+) positive or negative?`,
       solution:[`−${a}(${b}x + ${c}y)`,`= (−${a})(${b}x) + (−${a})(${c}y)`,`= −${a*b}x − ${a*c}y`,`Ravi's second term has the wrong sign.`],space:26};
@@ -827,14 +830,14 @@ Object.assign(QUESTS,{
   })},
   {type:'boxes',key:'q1',skill:'Two brackets in x',eoy:'EOY P1 Q11(a)',gen:(rng)=>{
     let a,b,c,d,e;do{a=ri(rng,2,6);b=ri(rng,2,5);c=ri(rng,1,6);d=ri(rng,2,5);e=ri(rng,1,7);}while(a*b-d===0||-a*c-d*e===0);
-    return {prompt:`Simplify ${a}(${b}x − ${c}) − ${d}(x + ${e}).`,tpl:[{b:0},'x + ',{b:1}],ans:[a*b-d,-a*c-d*e],note:'Type a negative number if needed.',
+    return {prompt:`Simplify ${a}(${b}x − ${c}) − ${d}(x + ${e}).`,tpl:[{b:0},'x + ',{b:1}],ans:[a*b-d,-a*c-d*e],note:'Type a negative number if needed. Type 1 or −1 if there is no number in front.',
       hint:`Expand each bracket on its own first. What is −${d} × ${e}?`,
       solution:[`${a}(${b}x − ${c}) − ${d}(x + ${e})`,`= ${a*b}x − ${a*c} − ${d}x − ${d*e}`,`= ${a*b}x − ${d}x − ${a*c} − ${d*e}`,`= ${poly([[a*b-d,'x'],[-a*c-d*e,'']])}`],space:36};
   }},
   {type:'boxes',key:'q2',skill:'Two brackets in x and y',eoy:'EOY P1 Q11(b)',gen:(rng)=>{
     let a,b,c,d,e,f;do{a=ri(rng,2,5);b=ri(rng,2,5);c=ri(rng,1,5);d=ri(rng,2,5);e=ri(rng,1,4);f=ri(rng,1,5);}while(a*b===d*e);
     const X=a*b-d*e,Y=-a*c-d*f;
-    return {prompt:`Simplify ${a}(${b}x − ${T(c,'y')}) − ${d}(${T(e,'x')} + ${T(f,'y')}).`,tpl:[{b:0},'x + ',{b:1},'y'],ans:[X,Y],note:'Type a negative number if needed.',
+    return {prompt:`Simplify ${a}(${b}x − ${T(c,'y')}) − ${d}(${T(e,'x')} + ${T(f,'y')}).`,tpl:[{b:0},'x + ',{b:1},'y'],ans:[X,Y],note:'Type a negative number if needed. Type 1 or −1 if there is no number in front.',
       hint:`What happens to both terms in the second bracket when you multiply by −${d}?`,
       solution:[`${a}(${b}x − ${T(c,'y')}) − ${d}(${T(e,'x')} + ${T(f,'y')})`,`= ${a*b}x − ${T(a*c,'y')} − ${T(d*e,'x')} − ${T(d*f,'y')}`,`= ${poly([[X,'x'],[Y,'y']])}`],space:40};
   }},
@@ -882,7 +885,7 @@ Object.assign(QUESTS,{
     const fin=M(rng,[`\\f{${top}}{${P}}`,`\\f{${poly([[X,'x'],[-C,'']])}}{${P}}`,top,`\\f{${top}}{${p+q}}`]);
     return {prompt:`Write ${ex} as a single fraction in its simplest form.`,steps:S,distract:D,pool:shuffle(rng,[0,1,2,3,4,5,6]),
       final:{prompt:'So the single fraction is…',opts:fin.opts,correct:fin.correct,hint:'Check the sign of the number term. Did you keep the denominator?'},
-      solution:[ex,S[1].m,S[2].m,`= \\f{${a*q}x − ${b*p*c}x + ${C}}{${P}}`,`= \\f{${top}}{${P}}`],space:56};
+      solution:[ex,'= '+S[1].m,'= '+S[2].m,`= \\f{${a*q}x − ${b*p*c}x + ${C}}{${P}}`,`= \\f{${top}}{${P}}`],space:56};
   }},
   {type:'boxes',key:'q2',skill:'Add algebraic fractions',gen:(rng)=>{
     const [p,q]=pick(rng,DEN);const P=p*q;
@@ -893,7 +896,7 @@ Object.assign(QUESTS,{
   {type:'boxes',key:'q3',skill:'Subtract with brackets',gen:(rng)=>{
     const [p,q]=pick(rng,DEN);const a=ri(rng,1,6),b=ri(rng,1,6),P=p*q,A=q-p,B=a*q+b*p;
     return {prompt:`Write \\f{x + ${a}}{${p}} − \\f{x − ${b}}{${q}} as a single fraction in the form \\f{Ax + B}{${P}}.`,
-      tpl:['A = ',{b:0},'   B = ',{b:1}],ans:[A,B],note:'Type a negative number if needed.',
+      tpl:['A = ',{b:0},'   B = ',{b:1}],ans:[A,B],note:'Type a negative number if needed. Type 1 or −1 if there is no number in front.',
       hint:`After rewriting over ${P}, put a bracket round the second top. What is −${p} × (−${b})?`,
       solution:[`\\f{${q}(x + ${a})}{${P}} − \\f{${p}(x − ${b})}{${P}}`,`= \\f{${q}x + ${a*q} − ${p}x + ${b*p}}{${P}}`,`= \\f{${poly([[A,'x'],[B,'']])}}{${P}}`,`A = ${nf(A)}`,`B = ${B}`],space:46};
   }},
@@ -955,7 +958,7 @@ Object.assign(QUESTS,{
     ex:['3x(a + b) + 6(a + b)','= (a + b)(3x + 6)','= 3(a + b)(x + 2)']
   })},
   {type:'mcq',key:'q1',skill:'Common bracket',eoy:'EOY P1 Q9(b)',gen:(rng)=>{
-    const k=ri(rng,2,6),m=ri(rng,2,5),a=ri(rng,2,5),b=ri(rng,1,7);
+    let k,m,a,b;do{k=ri(rng,2,6);m=ri(rng,2,5);a=ri(rng,2,5);b=ri(rng,1,7);}while(gcd(a,b)!==1); // bracket has no common factor left
     const br=`(${a}r + ${b})`;
     const ml=M(rng,[`${k}p(p − ${m})${br}`,`(${k}p^{2} − ${k*m}p)${br}`,`${k}p(p + ${m})${br}`,`${k}p^{2}(1 − ${m}p)${br}`]);
     return {prompt:`Factorise completely ${k}p^{2}${br} − ${k*m}p${br}.`,...ml,
@@ -970,7 +973,7 @@ Object.assign(QUESTS,{
       solution:[`Common bracket: (y + ${c})`,`From x(y + ${c}): x is left`,`From ${d}(y + ${c}): ${d} is left`,`= (y + ${c})(x + ${d})`],space:28};
   }},
   {type:'mcq',key:'q3',skill:'Bracket with a minus',gen:(rng)=>{
-    let p,q,s,t;do{p=ri(rng,2,7);q=ri(rng,2,5);s=ri(rng,1,7);t=ri(rng,2,9);}while(gcd(p,t)!==1);
+    let p,q,s,t;do{p=ri(rng,2,7);q=ri(rng,2,5);s=ri(rng,1,7);t=ri(rng,2,9);}while(gcd(p,t)!==1||gcd(q,s)!==1);
     const br=`(${q}a − ${s})`;
     const ml=M(rng,[`${br}(${p}x − ${t})`,`${br}(${p}x + ${t})`,`(${q}a + ${s})(${p}x − ${t})`,`${p*t}x${br}`]);
     return {prompt:`Factorise ${p}x${br} − ${t}${br}.`,...ml,
@@ -978,7 +981,7 @@ Object.assign(QUESTS,{
       solution:[`Common bracket: ${br}`,`Left over: ${p}x and −${t}`,`= ${br}(${p}x − ${t})`],space:28};
   }},
   {type:'boxes',key:'q4',skill:'Bracket and a number',thinking:true,gen:(rng)=>{
-    const h=ri(rng,2,6),m=ri(rng,2,7),b=ri(rng,2,5),c=ri(rng,1,9);
+    let h,m,b,c;do{h=ri(rng,2,6);m=ri(rng,2,7);b=ri(rng,2,5);c=ri(rng,1,9);}while(gcd(b,c)!==1);
     return {prompt:`Factorise completely ${h}x(${b}y + ${c}) + ${h*m}(${b}y + ${c}).`,
       tpl:['',{b:0},'(',{b:1},'y + ',{b:2},')(x + ',{b:3},')'],ans:[h,b,c,m],
       hint:`After taking out the bracket, look at ${h}x + ${h*m}. Is a number still common?`,
@@ -1009,7 +1012,16 @@ const br=(b)=>`(x ${b<0?'−':'+'} ${Math.abs(b)})`;              // (x + b)
 const pick=(rng,arr)=>arr[Math.floor(rng()*arr.length)];
 const nz=(rng,a,b)=>{let v;do{v=ri(rng,a,b);}while(v===0);return v;};
 const mcq=(rng,list)=>{const order=shuffle(rng,[0,1,2,3]);return {opts:order.map(i=>({m:list[i]})),correct:order.indexOf(0),order};};
-const FR_NOTE='You may type a fraction like 12/7.';
+const FR_NOTE='Give your answer as a fraction (like 12/7) or correct to 2 decimal places.';
+const FR_ASK=' Give your answer as a fraction or correct to 2 decimal places.';
+const co=k=>k===1?'':k===-1?'−':nf(k);
+// Ax + B = Cx + D, taking away the SMALLER x term; returns solution lines after the equation line
+const both=(A,B,C,D)=>{const L=[];
+  if(A>C){const k=A-C;L.push(`${poly([[k,'x'],[B,'']])} = ${nf(D)}`);if(B!==0)L.push(`${co(k)}x = ${nf(D)} ${B>0?'−':'+'} ${Math.abs(B)}`);L.push(`${co(k)}x = ${nf(D-B)}`);if(k!==1)L.push(`x = ${fr(D-B,k)}`);}
+  else {const k=C-A;L.push(`${nf(B)} = ${poly([[k,'x'],[D,'']])}`);if(D!==0)L.push(`${nf(B)} ${D>0?'−':'+'} ${Math.abs(D)} = ${co(k)}x`);L.push(`${nf(B-D)} = ${co(k)}x`);L.push(`x = ${fr(B-D,k)}`);}
+  return L;};
+// kx + K = e  →  lines (no duplicate x line when k = 1)
+const lin=(k,K,e)=>{const L=[];if(K!==0)L.push(`${co(k)}x = ${nf(e)} ${K>0?'−':'+'} ${Math.abs(K)}`);L.push(`${co(k)}x = ${nf(e-K)}`);if(k!==1)L.push(`x = ${fr(e-K,k)}`);return L;};
 
 Object.assign(QUESTS,{
 /* ---------------- WEEK 3 DAY 1 ---------------- */
@@ -1029,12 +1041,12 @@ Object.assign(QUESTS,{
   {type:'boxes',key:'q2',skill:'Fraction answer',eoy:'EOY P2 Q5(a)',gen:(rng)=>{
     const a=ri(rng,3,9),b=ri(rng,1,12);let N;do{N=ri(rng,10,60);}while(N%a===0);
     const c=b+N;
-    return {prompt:`Solve ${a}y + ${b} = ${c}.`,tpl:['y = ',{b:0}],ans:[N/a],tol:0.01,note:FR_NOTE,
+    return {prompt:`Solve ${a}y + ${b} = ${c}.${FR_ASK}`,tpl:['y = ',{b:0}],ans:[N/a],tol:0.01,note:FR_NOTE,
       hint:`To undo + ${b}, what do you do to both sides? Then, what undoes × ${a}?`,
       solution:[`${a}y + ${b} = ${c}`,`${a}y = ${c} − ${b}`,`${a}y = ${N}`,`y = ${fr(N,a)}`],space:34};
   }},
   {type:'boxes',key:'q3',skill:'Negative x term',gen:(rng)=>{
-    const a=ri(rng,2,8),x0=nz(rng,-8,9),b=ri(rng,5,30),c=b-a*x0;
+    const a=ri(rng,2,8),b=ri(rng,5,30);let x0,c;do{x0=nz(rng,-8,9);c=b-a*x0;}while(c===0);
     return {prompt:`Solve ${b} − ${a}x = ${nf(c)}.`,tpl:['x = ',{b:0}],ans:[x0],note:'Type a negative number if needed.',
       hint:`Move the ${b} first. Is the number in front of x positive or negative? What do you divide by?`,
       solution:[`${b} − ${a}x = ${nf(c)}`,`−${a}x = ${nf(c)} − ${b}`,`−${a}x = ${nf(c-b)}`,`x = \\f{${nf(c-b)}}{−${a}}`,`x = ${nf(x0)}`],space:36};
@@ -1058,7 +1070,7 @@ Object.assign(QUESTS,{
     ex:['−7(x − 2) = 2','−7x + 14 = 2','−7x = 2 − 14','−7x = −12','x = \\f{12}{7}']
   })},
   {type:'boxes',key:'q1',skill:'Expand and solve',gen:(rng)=>{
-    const a=ri(rng,2,6),b=nz(rng,-6,8),x0=nz(rng,-6,9),c=a*(x0+b);
+    const a=ri(rng,2,6),b=nz(rng,-6,8);let x0,c;do{x0=nz(rng,-6,9);c=a*(x0+b);}while(c===0);
     return {prompt:`Solve ${a}${br(b)} = ${nf(c)}.`,tpl:['x = ',{b:0}],ans:[x0],note:'Type a negative number if needed.',
       hint:`Multiply ${a} by each term inside the bracket. What do you get for ${a} × ${nf(b)}?`,
       solution:[`${a}${br(b)} = ${nf(c)}`,`${ex(a,'x',a*b)} = ${nf(c)}`,`${a}x = ${nf(c)} ${a*b>0?'−':'+'} ${Math.abs(a*b)}`,`${a}x = ${nf(c-a*b)}`,`x = ${nf(x0)}`],space:38};
@@ -1066,16 +1078,16 @@ Object.assign(QUESTS,{
   {type:'boxes',key:'q2',skill:'Negative outside bracket',eoy:'EOY P2 Q5(b)',gen:(rng)=>{
     const a=ri(rng,2,9),b=ri(rng,1,6);let c;do{c=nz(rng,-12,12);}while(c%a===0);
     const N=a*b-c; // −ax = c − ab  →  x = (ab − c)/a
-    return {prompt:`Solve −${a}(x − ${b}) = ${nf(c)}.`,tpl:['x = ',{b:0}],ans:[N/a],tol:0.01,note:FR_NOTE,
+    return {prompt:`Solve −${a}(x − ${b}) = ${nf(c)}.${FR_ASK}`,tpl:['x = ',{b:0}],ans:[N/a],tol:0.01,note:FR_NOTE,
       hint:`What is −${a} × −${b}? After expanding, what number is in front of x, and is it negative?`,
       solution:[`−${a}(x − ${b}) = ${nf(c)}`,`−${a}x + ${a*b} = ${nf(c)}`,`−${a}x = ${nf(c)} − ${a*b}`,`−${a}x = ${nf(c-a*b)}`,`x = \\f{${nf(c-a*b)}}{−${a}}`,`x = ${fr(N,a)}`],space:42};
   }},
   {type:'boxes',key:'q3',skill:'Two brackets',gen:(rng)=>{
-    const a=ri(rng,3,7);let c=ri(rng,1,a-1);const b=ri(rng,1,6),d=ri(rng,1,6),x0=nz(rng,-5,8);
-    const e=a*(x0+b)-c*(x0-d),k=a-c,K=a*b+c*d;
+    const a=ri(rng,3,7);let c=ri(rng,1,a-1);const b=ri(rng,1,6),d=ri(rng,1,6);let x0,e;do{x0=nz(rng,-5,8);e=a*(x0+b)-c*(x0-d);}while(e===0);
+    const k=a-c,K=a*b+c*d;
     return {prompt:`Solve ${a}(x + ${b}) − ${c===1?'':c}(x − ${d}) = ${nf(e)}.`,tpl:['x = ',{b:0}],ans:[x0],note:'Type a negative number if needed.',
       hint:`Expand both brackets. What is −${c} × −${d}? Then collect the x terms and the numbers.`,
-      solution:[`${a}(x + ${b}) − ${c===1?'':c}(x − ${d}) = ${nf(e)}`,`${a}x + ${a*b} − ${c===1?'':c}x + ${c*d} = ${nf(e)}`,`${k===1?'':k}x + ${K} = ${nf(e)}`,`${k===1?'':k}x = ${nf(e-K)}`,`x = ${nf(x0)}`],space:44};
+      solution:[`${a}(x + ${b}) − ${c===1?'':c}(x − ${d}) = ${nf(e)}`,`${a}x + ${a*b} − ${c===1?'':c}x + ${c*d} = ${nf(e)}`,`${co(k)}x + ${K} = ${nf(e)}`,...lin(k,K,e)],space:44};
   }},
   {type:'mcq',key:'q4',skill:'Expanding with negatives',thinking:true,gen:(rng)=>{
     const a=ri(rng,2,9),b=ri(rng,2,8),c=nz(rng,-15,15);
@@ -1099,7 +1111,7 @@ Object.assign(QUESTS,{
     let a,b,p,q,x0,r,L,tries=0;
     do{a=pick(rng,[3,4,5,6]);b=pick(rng,[2,3,4]);p=ri(rng,1,4);q=ri(rng,1,7);x0=ri(rng,1,10);
       L=lcm(a,b);r=(p*x0)/a+(x0-q)/b;tries++;}
-    while((a===b||!Number.isInteger(r)||r===0||L===a*0)&&tries<400);
+    while((a===b||!Number.isInteger(r)||r===0||gcd(p,a)!==1)&&tries<400);
     if(!Number.isInteger(r)||a===b){a=4;b=2;p=3;q=4;x0=4;L=4;r=1;}
     const A=(L/a)*p,B=L/b,R=r*L;
     const lhs=`\\f{${p===1?'':p}x}{${a}} + \\f{x − ${q}}{${b}}`;
@@ -1135,13 +1147,15 @@ Object.assign(QUESTS,{
     while((a===b||!Number.isInteger(x0))&&t<400);
     if(!Number.isInteger(x0)||a===b){a=3;b=2;p=1;q=4;x0=14;}
     // (x + p)/a = (x − q)/b  →  b(x + p) = a(x − q)
+    const Lm=lcm(a,b),ca=Lm/a,cb=Lm/b;
     return {prompt:`Solve \\f{x + ${p}}{${a}} = \\f{x − ${q}}{${b}}.`,tpl:['x = ',{b:0}],ans:[x0],note:'Type a negative number if needed.',
-      hint:`Multiply both sides by ${lcm(a,b)} (or by ${a} × ${b}). Remember the brackets round each top.`,
-      solution:[`\\f{x + ${p}}{${a}} = \\f{x − ${q}}{${b}}`,`${b}(x + ${p}) = ${a}(x − ${q})`,`${b}x + ${b*p} = ${a}x − ${a*q}`,`${b*p} + ${a*q} = ${a}x − ${b}x`,`${b*p+a*q} = ${a-b===1?'':a-b===-1?'−':nf(a-b)}x`,`x = ${nf(x0)}`],space:46};
+      hint:`What is the LCM of ${a} and ${b}? Multiply both sides by it. Remember the brackets round each top.`,
+      solution:[`\\f{x + ${p}}{${a}} = \\f{x − ${q}}{${b}}`,`Multiply both sides by ${Lm}:`,`${co(ca)}(x + ${p}) = ${co(cb)}(x − ${q})`,`${co(ca)}x + ${ca*p} = ${co(cb)}x − ${cb*q}`,...both(ca,ca*p,cb,-cb*q)],space:50};
   }},
   {type:'mcq',key:'q4',skill:'Spot the mistake',thinking:true,gen:(rng)=>{
-    const a=pick(rng,[3,5]),L=2*a,q=ri(rng,1,9),r=ri(rng,2,9);
-    const m=mcq(rng,[`The ${q} must also be multiplied by ${a}`,`She should multiply by ${a+2}, not ${L}`,`The ${r} should not be multiplied by ${L}`,'Nothing: her line is correct']);
+    const a=pick(rng,[3,5]),L=2*a;let q,r;
+    do{q=ri(rng,1,9);r=ri(rng,2,9);}while(new Set([q,r,a,2,L,a+2]).size<6||[q,r].includes(a*q)||r*L===a*q);
+    const m=mcq(rng,[`The ${q} in (x − ${q}) must also be × ${a}`,`She should multiply by ${a+2}, not ${L}`,`The ${r} on the right should not be × ${L}`,'Nothing: her line is correct']);
     return {prompt:`Mia multiplied \\f{x}{${a}} + \\f{x − ${q}}{2} = ${r} by ${L}. She wrote 2x + ${a}x − ${q} = ${r*L}. What went wrong?`,...m,
       hint:`Work out ${L} × \\f{x − ${q}}{2} yourself. Does every part of the top get multiplied?`,
       solution:[`${L} × \\f{x}{${a}} = 2x`,`${L} × \\f{x − ${q}}{2} = ${a}(x − ${q}) = ${a}x − ${a*q}`,`Correct line: 2x + ${a}x − ${a*q} = ${r*L}`,`Mia forgot to multiply the ${q} by ${a}.`],space:32};
@@ -1163,7 +1177,7 @@ Object.assign(QUESTS,{
     const hi=a>c?[a,b,c,d]:[c,d,a,b],k=hi[0]-hi[2];
     return {prompt:`Solve ${ex(a,'x',b)} = ${ex(c,'x',d)}.`,tpl:['x = ',{b:0}],ans:[x0],note:'Type a negative number if needed.',
       hint:`Which x term is smaller: ${a}x or ${c}x? Take it away from both sides. What is left?`,
-      solution:[`${ex(a,'x',b)} = ${ex(c,'x',d)}`,a>c?`${ex(k,'x',b)} = ${nf(d)}`:`${nf(b)} = ${ex(k,'x',d)}`,a>c?`${k===1?'':k}x = ${nf(d-b)}`:`${nf(b-d)} = ${k===1?'':k}x`,`x = ${nf(x0)}`],space:38};
+      solution:[`${ex(a,'x',b)} = ${ex(c,'x',d)}`,...both(a,b,c,d)],space:40};
   }},
   {type:'boxes',key:'q2',skill:'Brackets on both sides',gen:(rng)=>{
     let a,c,b,d,x0,t=0;
@@ -1173,13 +1187,13 @@ Object.assign(QUESTS,{
     // a(x + b) = c(x − d)
     return {prompt:`Solve ${a}(x + ${b}) = ${c}(x − ${d}).`,tpl:['x = ',{b:0}],ans:[x0],note:'Type a negative number if needed.',
       hint:'Expand both brackets first. Then which x term will you move?',
-      solution:[`${a}(x + ${b}) = ${c}(x − ${d})`,`${a}x + ${a*b} = ${c}x − ${c*d}`,`${a*b} + ${c*d} = ${c}x − ${a}x`,`${a*b+c*d} = ${c-a===1?'':c-a===-1?'−':nf(c-a)}x`,`x = ${nf(x0)}`],space:44};
+      solution:[`${a}(x + ${b}) = ${c}(x − ${d})`,`${a}x + ${a*b} = ${c}x − ${c*d}`,...both(a,a*b,c,-c*d)],space:46};
   }},
   {type:'boxes',key:'q3',skill:'x terms on opposite sides',gen:(rng)=>{
-    const a=ri(rng,2,7),d=ri(rng,2,7),b=ri(rng,1,12),x0=nz(rng,-6,8),c=(a+d)*x0-b;
+    const a=ri(rng,2,7),d=ri(rng,2,7),b=ri(rng,1,12);let x0,c;do{x0=nz(rng,-6,8);c=(a+d)*x0-b;}while(c===0);
     return {prompt:`Solve ${a}x − ${b} = ${nf(c)} − ${d}x.`,tpl:['x = ',{b:0}],ans:[x0],note:'Type a negative number if needed.',
       hint:`How can you get rid of the − ${d}x on the right? What do you add to both sides?`,
-      solution:[`${a}x − ${b} = ${nf(c)} − ${d}x`,`${a}x + ${d}x − ${b} = ${nf(c)}`,`${a+d}x − ${b} = ${nf(c)}`,`${a+d}x = ${nf(c+b)}`,`x = ${nf(x0)}`],space:40};
+      solution:[`${a}x − ${b} = ${nf(c)} − ${d}x`,`Add ${d}x to both sides:`,...both(a+d,-b,0,c)],space:42};
   }},
   {type:'mcq',key:'q4',skill:'Keeping it balanced',thinking:true,gen:(rng)=>{
     let a,c;do{a=ri(rng,4,9);c=ri(rng,2,8);}while(c>=a);
@@ -1209,6 +1223,7 @@ const pick=(rng,arr)=>arr[Math.floor(rng()*arr.length)];
 const mcq=(rng,list)=>{const order=shuffle(rng,[0,1,2,3]);return {opts:order.map(i=>({m:list[i]})),correct:order.indexOf(0),order};};
 const ex=(a,v,b)=>poly([[a,v],[b,'']]);
 const co=k=>k===1?'':String(k);
+const money=v=>'$'+(Number.isInteger(v)?String(v):v.toFixed(2));
 const mult=k=>k===2?'twice':'three times';
 // 4 distinct options: correct first, then fill from candidates
 const distinct=(correct,cands)=>{const o=[correct];for(const c of cands){if(!o.includes(c))o.push(c);if(o.length===4)break;}let k=1;while(o.length<4){o.push(correct+' + '+k);k++;}return o;};
@@ -1277,7 +1292,7 @@ Object.assign(QUESTS,{
       {l:'Write the gold ring cost in terms of x',m:`Gold ring = $2(x + ${m})`,why:'Which part is doubled: only the watch, or the $'+m+' as well?'},
       {l:'Guess and check',m:'Try x = 50, x = 60, …',why:'Can an equation find the answer directly, without guessing?'}
     ];
-    const opts=distinct(`$${x0}`,[`$${G-m}`,`$${rdp((G+m)/2,1)}`,`$${rdp(G/2-m,1)}`,`$${rdp(G/2,1)}`]);
+    const opts=distinct(money(x0),[money(G-m),money((G+m)/2),money(G/2-m),money(G/2)]);
     const order=shuffle(rng,[0,1,2,3]);
     return {prompt:`A watch costs $x. A gold ring costs $${m} more than twice the cost of the watch. The gold ring costs $${G}. Find the cost of the watch.`,
       steps:S,distract:D,pool:shuffle(rng,[0,1,2,3,4,5,6]),
@@ -1285,7 +1300,7 @@ Object.assign(QUESTS,{
       solution:['Let the watch cost $x.',`Gold ring = $(2x + ${m})`,`2x + ${m} = ${G}`,`2x = ${G-m}`,`x = ${x0}`,`The watch costs $${x0}.`],space:46};
   }},
   {type:'boxes',key:'q2',skill:'Total cost',eoy:'EOY P2 Q6(c)',gen:(rng)=>{
-    const x0=ri(rng,40,130),m=5*ri(rng,6,24),s=5*ri(rng,10,40),G=2*x0+m;
+    const x0=ri(rng,40,130),m=5*ri(rng,6,24);let s;do{s=5*ri(rng,6,40);}while(s>=x0+m-5);const G=2*x0+m; // gold (2x + m) > silver (x + s)
     return {prompt:`A watch costs $x. A gold ring costs $${m} more than twice the watch. A silver ring costs $${s} more than the watch. The gold ring costs $${G}. Jenny buys 1 watch, 1 silver ring and 1 gold ring. How much does she pay?`,
       tpl:['$',{b:0}],ans:[4*x0+s+m],
       hint:'First find x from the gold ring. Then find the cost of each item. Did you include the watch itself?',
@@ -1416,6 +1431,9 @@ function g5_nth(d,c){
   if(c===0) return '−'+dn;
   return `${nf(c)} − ${dn}`;
 }
+/* n written exactly: "= 40", "= 31.2", or "≈ 41.29" when it does not terminate */
+const g5_fmt=x=>Number.isInteger(x)?'= '+x:Math.abs(x*100-Math.round(x*100))<1e-9?'= '+rdp(x,2):'≈ '+rdp(x,2);
+const g5_frac=(num,den)=>{if(den<0){num=-num;den=-den;}let a=Math.abs(num),b=den;while(b){[a,b]=[b,a%b];}const g=a||1;num/=g;den/=g;return den===1?nf(num):(num<0?'−':'')+`\\f{${Math.abs(num)}}{${den}}`;};
 const g5_list=(a,d,n)=>Array.from({length:n},(_,i)=>a+i*d);
 const g5_seqStr=(a,d,n)=>g5_list(a,d,n).map(nf).join(', ')+', …';
 /* "a − (−b)" style for working lines */
@@ -1616,15 +1634,14 @@ Object.assign(QUESTS,{
     const d=-ri(rng,3,7),a=ri(rng,10,30),z=a-d,isTerm=rng()<0.5;
     let n=ri(rng,25,50),v=z+d*n;if(!isTerm)v+=ri(rng,1,-d-1);
     const nExact=(v-z)/d,nWrong=(v+z)/d;
-    const fmt=x=>Number.isInteger(x)?String(x):String(rdp(x,2));
-    const right=isTerm?`Yes: n = ${n}, a whole number`:`No: n = ${fmt(nExact)}, not a whole number`;
-    const wrongCalc=Number.isInteger(nWrong)?`Yes: n = ${nWrong}, a whole number`:`No: n = ${fmt(nWrong)}, not a whole number`;
+    const right=isTerm?`Yes: n = ${n}, a whole number`:`No: n ${g5_fmt(nExact)}, not a whole number`;
+    const wrongCalc=Number.isInteger(nWrong)?`Yes: n = ${nWrong}, a whole number`:`No: n ${g5_fmt(nWrong)}, not a whole number`;
     const opts=[right,wrongCalc===right?(isTerm?`No: n = ${n}, too big`:`Yes: n = ${Math.round(nExact)}`):wrongCalc,`No: negative numbers are never terms`,isTerm?`No: ${nf(v)} is not a multiple of ${-d}`:`Yes: the terms go down forever`];
     const uniq=[...new Set(opts)];while(uniq.length<4)uniq.push(`Yes: it is term ${n+uniq.length}`);
     const order=shuffle(rng,[0,1,2,3]);
     return {prompt:`The sequence ${g5_seqStr(a,d,4)} has nth term ${g5_nth(d,z)}. Is ${nf(v)} a term of the sequence?`,opts:order.map(i=>({m:uniq[i]})),correct:order.indexOf(0),
       hint:`Write ${g5_nth(d,z)} = ${nf(v)}. What do you subtract from both sides first? What kind of number must n be?`,
-      solution:[`${g5_nth(d,z)} = ${nf(v)}`,`−${-d}n = ${g5_minus(v,z)}`,`−${-d}n = ${nf(v-z)}`,`n = ${fmt(nExact)}`,isTerm?`n is a whole number, so ${nf(v)} is the ${n}th term.`:`n is not a whole number, so ${nf(v)} is not a term.`],space:44};
+      solution:[`${g5_nth(d,z)} = ${nf(v)}`,`−${-d}n = ${g5_minus(v,z)}`,`−${-d}n = ${nf(v-z)}`,`n = ${g5_frac(v-z,d)}`,isTerm?`n is a whole number, so ${nf(v)} is the ${n}th term.`:`n is not a whole number, so ${nf(v)} is not a term.`],space:44};
   }},
   {type:'boxes',key:'q2',skill:'Which term is it?',gen:(rng)=>{
     const d=ri(rng,3,9),c=-ri(rng,1,9),n=ri(rng,12,45),v=d*n+c;
@@ -1635,13 +1652,13 @@ Object.assign(QUESTS,{
   {type:'mcq',key:'q3',skill:'Is it a term?',gen:(rng)=>{
     const d=ri(rng,3,8),c=ri(rng,1,d-1),target=[100,150,200,250][ri(rng,0,3)]+ri(rng,0,6);
     const nEx=(target-c)/d,isT=Number.isInteger(nEx);
-    const fmt=x=>Number.isInteger(x)?String(x):String(rdp(x,2));
-    const opts=[isT?`Yes: it is term ${nEx}`:`No: n = ${fmt(nEx)} is not whole`,isT?`No: n = ${nEx} is too big`:`Yes: it is term ${Math.round(nEx)}`,`Yes: it is term ${d*target+c}`,`No: ${target} is even`];
+    const wrongWhy=isT?(target%d!==0?`No: ${target} is not in the ${d} times table`:`No: ${target} is in the ${d} times table, so it cannot be a term`):`Yes: ${target} − ${c} is close to a multiple of ${d}`;
+    const opts=[isT?`Yes: it is term ${nEx}`:`No: n ${g5_fmt(nEx)} is not whole`,isT?`No: n = ${nEx} is too big`:`Yes: it is term ${Math.round(nEx)}`,`Yes: it is term ${d*target+c}`,wrongWhy];
     const uniq=[...new Set(opts)];while(uniq.length<4)uniq.push(`Yes: it is term ${target-uniq.length}`);
     const order=shuffle(rng,[0,1,2,3]);
     return {prompt:`Is ${target} a term of the sequence with nth term ${g5_nth(d,c)}?`,opts:order.map(i=>({m:uniq[i]})),correct:order.indexOf(0),
       hint:`Set ${g5_nth(d,c)} = ${target} and solve. Is your n a whole number?`,
-      solution:[`${g5_nth(d,c)} = ${target}`,`${d}n = ${target-c}`,`n = ${fmt(nEx)}`,isT?`Whole number: ${target} is term ${nEx}.`:`Not a whole number: ${target} is not a term.`],space:32};
+      solution:[`${g5_nth(d,c)} = ${target}`,`${d}n = ${target-c}`,`n = ${g5_frac(target-c,d)}`,isT?`Whole number: ${target} is term ${nEx}.`:`Not a whole number: ${target} is not a term.`],space:32};
   }},
   {type:'boxes',key:'q4',skill:'Matchstick patterns',gen:(rng)=>{
     const P=g5_pat(rng),n=ri(rng,12,40),m=P.d*n+P.c;
@@ -1724,7 +1741,7 @@ Object.assign(QUESTS,{
     const idx=shuffle(rng,[0,1,3,4,5]).slice(0,2).sort((a,b)=>a-b);
     const sol=[];idx.forEach(i=>{const x=xs[i];sol.push(`When x = ${nf(x)}:`,`y = ${g6_mx(m,x)}${g6_cstr(c)}`,`y = ${nf(ys[i])}`);});
     return {prompt:`Complete the table of values for ${g6_eq(m,c)}.`,table:{xs,ys,missing:idx},ans:idx.map(i=>ys[i]),
-      hint:'Multiply the x-value by the number in front of x first. Is the answer positive or negative?',solution:sol,space:30};
+      hint:'Replace x with each value. Multiply before you add or subtract. Is the answer positive or negative?',solution:sol,space:30};
   }},
   {type:'mcq',key:'q3',skill:'Points on a line',gen:(rng)=>{
     const p=ri(rng,2,4)*(rng()<0.5?-1:1),c=ri(rng,1,6)*(rng()<0.5?-1:1),m=g6_m(p,1),x0=ri(rng,1,4)*(rng()<0.5?-1:1),y0=p*x0+c;
@@ -1799,7 +1816,8 @@ Object.assign(QUESTS,{
     ex:['Does (5, −7) lie on y = −2x − 4?','y = −2(5) − 4','y = −14','−14 is not −7, so no.']
   })},
   {type:'steps',key:'q1',skill:'Equation from a graph',eoy:'EOY P1 Q12(a)(b)',gen:(rng)=>{
-    const {m,c,x2,y2}=g6_line(rng,false);
+    let L=g6_line(rng,false);for(let t=0;t<100&&Math.abs(L.m.v)===1;t++)L=g6_line(rng,false);
+    const {m,c,x2,y2}=L;
     const xint=-c/m.v,xintS=Number.isInteger(xint)?nf(xint):String(rdp(xint,2));
     const inv=g6_m(x2,y2-c);
     const S=[
@@ -1811,7 +1829,8 @@ Object.assign(QUESTS,{
     const D=[
       {l:'Use where the line cuts the x-axis as c',m:`c = ${xintS}`,why:'c is the y-intercept. Which axis does the line have to cross for that?'},
       {l:'Gradient = run ÷ rise',m:`m = ${g6_mtxt(inv)}`,why:'Which change goes on top: the change in y or the change in x?'},
-      {l:'Ignore the sign of the gradient',m:`m = ${g6_mtxt(g6_m(Math.abs(m.p),m.q))}`,why:'Does the line go up or down from left to right? What sign does that give?'}
+      m.v<0?{l:'Drop the minus sign from the gradient',m:`m = ${g6_mtxt(g6_m(-m.p,m.q))}`,why:'Does the line go up or down from left to right? What sign does that give?'}
+           :{l:'Make the gradient negative because c is below the x-axis',m:`m = ${g6_mtxt(g6_m(-m.p,m.q))}`,why:'Does the position of c change the direction of the line? Look: up or down from left to right?'}
     ];
     const cands=[g6_eq(m,c),g6_eq(g6_m(-m.p,m.q),c),g6_eq(m,-c),inv.v!==m.v?g6_eq(inv,c):g6_eq(g6_m(2*m.p,m.q),c)];
     const uniq=[...new Set(cands)];while(uniq.length<4)uniq.push(g6_eq(m,c+uniq.length));
@@ -1873,12 +1892,13 @@ Object.assign(QUESTS,{
   }},
   {type:'boxes',key:'q2',skill:'Reading y from a graph',eoy:'EOY P2 Q10(c)',gen:(rng)=>{
     const ch=[[2,3],[-2,3],[1,2],[-1,2]][ri(rng,0,3)],m=g6_m(ch[0],ch[1]);let c=ri(rng,1,3)*(rng()<0.5?-1:1);
-    const xr=[3.6,4.5,1.5,2.4,5.1,-1.5,-2.4][ri(rng,0,6)],yr=m.v*xr+c;
+    // x and y both land on 0.5 gridlines: q = 3 -> x a multiple of 1.5; q = 2 -> x an odd whole number
+    let xr,yr;for(let t=0;t<60;t++){xr=m.q===3?[-1.5,1.5,4.5][ri(rng,0,2)]:[-3,-1,1,3,5][ri(rng,0,4)];yr=m.v*xr+c;if(Math.abs(yr)<=5.5)break;}
     return {prompt:`The graph of ${g6_eq(m,c)} is drawn. Use the graph to find the value of y when x = ${nf(xr)}.`,
       diagram:g6_graph(m,c,{xmin:-3,xmax:6,ymin:-6,ymax:6,a:-3,b:6,grid:{dx:0.5,dy:0.5},H:460}),
-      tpl:['y ≈ ',{b:0}],ans:[rdp(yr,2)],tol:0.25,note:'Give your answer to 1 decimal place. A good reading is accepted.',
+      tpl:['y = ',{b:0}],ans:[yr],tol:0.25,note:'Each small square is 0.5. You may type a decimal like 2.5.',
       hint:`Find x = ${nf(xr)} on the x-axis. Go up or down to the line. Then go across to the y-axis. Each small square is 0.5.`,
-      solution:[`Draw a line up or down from x = ${nf(xr)} to the graph.`,'Then go across to the y-axis.',`y ≈ ${fx(yr,1)}`,`(Check: y = ${g6_coef(m)}(${nf(xr)})${g6_cstr(c)} = ${fx(yr,2)})`],space:24};
+      solution:[`Draw a line up or down from x = ${nf(xr)} to the graph.`,'Then go across to the y-axis.',`y = ${nf(yr)}`,`Check: y = ${g6_mx(m,xr)}${g6_cstr(c)} = ${nf(yr)}`],space:24};
   }},
   {type:'boxes',key:'q3',skill:'Reading x from a graph',gen:(rng)=>{
     let p=[1,2,-1,-2][ri(rng,0,3)],q=[1,2][ri(rng,0,1)];if(q===2&&Math.abs(p)===2)q=1;const m=g6_m(p,q),c=ri(rng,-3,3);
@@ -1924,6 +1944,10 @@ const g7pick=(rng,arr)=>arr[Math.floor(rng()*arr.length)];
 function g7pf(f){ // {2:3,3:1,5:1} -> "2^{3} × 3 × 5"
   return Object.keys(f).map(Number).sort((a,b)=>a-b).filter(p=>f[p]>0).map(p=>f[p]===1?String(p):`${p}^{${f[p]}}`).join(' × ');
 }
+const g7sf=(x,n)=>{const a=Math.abs(x);const t=a>=Math.pow(10,n)?String(rsf(a,n)):a.toPrecision(n);return (x<0?'−':'')+t;}; // keeps zeros
+const g7dp=(x,n)=>(x<0?'−':'')+Math.abs(x).toFixed(n);
+const g7money=x=>String(x).replace(/\B(?=(\d{3})+(?!\d))/g,' ');
+const g7h=min=>{const g=g7gcd(min,60);return min%60===0?String(min/60):`\\f{${min/g}}{${60/g}}`;}; // minutes -> hours, as a fraction
 const g7val=f=>Object.keys(f).reduce((s,p)=>s*Math.pow(+p,f[p]),1);
 function g7mcq(rng,list){const order=shuffle(rng,[0,1,2,3]);return {opts:order.map(i=>({m:list[i]})),correct:order.indexOf(0),L:i=>LET[order.indexOf(i)]};}
 
@@ -1944,15 +1968,15 @@ Object.assign(QUESTS,{
     return {prompt:`A ribbon is ${str} m long. Write its length correct to 4 significant figures and to 3 decimal places.`,
       tpl:['4 s.f.: ',{b:0},' m   3 d.p.: ',{b:1},' m'],ans:[sf4,dp3],tol:1e-7,
       hint:'Where does s.f. counting start? Where does d.p. counting start? Then look at the digit just after the last one you keep.',
-      solution:['4 s.f.: start counting at the first non-zero digit.',`${str.slice(0,cutS)}|${str.slice(cutS)}`,`Decider digit = ${str[cutS]}`,`= ${sf4} m`,'3 d.p.: count 3 digits after the point.',`${str.slice(0,cutD)}|${str.slice(cutD)}`,`Decider digit = ${str[cutD]}`,`= ${dp3} m`],space:40};
+      solution:['4 s.f.: start counting at the first non-zero digit.',`${str.slice(0,cutS)}|${str.slice(cutS)}`,`Decider digit = ${str[cutS]}`,`= ${g7sf(x,4)} m`,'3 d.p.: count 3 digits after the point.',`${str.slice(0,cutD)}|${str.slice(cutD)}`,`Decider digit = ${str[cutD]}`,`= ${g7dp(x,3)} m`],note:'Keep any zeros needed for the stated s.f. or d.p.',space:40};
   }},
   {type:'boxes',key:'q2',skill:'Calculator and rounding',eoy:'EOY P2 Q1(a)',gen:(rng)=>{
     const p=ri(rng,12,39)/10,q=ri(rng,11,99)/10,r=ri(rng,15,49)/10;
     const v=(Math.pow(p,3)-q)/(r*r);
     return {prompt:`Use your calculator to find \\f{${p}^{3} − ${q}}{${r}^{2}}. Give your answer correct to 4 significant figures.`,
-      tpl:['Answer: ',{b:0}],ans:[rsf(v,4)],tol:sfTol(v,4),note:'Type a negative number if needed.',
+      tpl:['Answer: ',{b:0}],ans:[rsf(v,4)],tol:sfTol(v,4),note:'Type a negative number if needed. Keep any zeros needed for 4 s.f.',
       hint:'Use brackets for the top and the bottom on your calculator. Which digit decides the 4th significant figure?',
-      solution:[`${p}^{3} = ${rdp(Math.pow(p,3),6)}`,`${p}^{3} − ${q} = ${g7n(Math.pow(p,3)-q)}`,`${r}^{2} = ${rdp(r*r,4)}`,`Answer = ${g7n(rdp(v,8))}...`,`= ${g7n(rsf(v,4))} (4 s.f.)`],space:36};
+      solution:[`${p}^{3} = ${rdp(Math.pow(p,3),6)}`,`${p}^{3} − ${q} = ${g7n(Math.pow(p,3)-q)}`,`${r}^{2} = ${rdp(r*r,4)}`,`Answer = ${g7n(rdp(v,8))}...`,`= ${g7sf(v,4)} (4 s.f.)`],space:36};
   }},
   {type:'mcq',key:'q3',skill:'Ordering real numbers',eoy:'EOY P1 Q5(a)',gen:(rng)=>{
     const k=ri(rng,2,6),root=Math.sqrt(k*k+1),d=rdp(Math.floor(root*100)/100-0.01,2);
@@ -2013,7 +2037,7 @@ Object.assign(QUESTS,{
     return {prompt:`Written as products of prime factors, ${A} = ${g7pf(f1)} and ${B} = ${g7pf(f2)}. Find the HCF and the LCM of ${A} and ${B}.`,
       tpl:['HCF = ',{b:0},'   LCM = ',{b:1}],ans:[H,Lc],
       hint:'For the HCF, which primes appear in both? Take the lower power. For the LCM, take every prime with its higher power.',
-      solution:[`HCF = ${g7pf(lo)||'1'}`,`HCF = ${H}`,`LCM = ${g7pf(hi)}`,`LCM = ${Lc}`],space:40};
+      solution:[...(g7pf(lo)===String(H)?[]:[`HCF = ${g7pf(lo)}`]),`HCF = ${H}`,...(g7pf(hi)===String(Lc)?[]:[`LCM = ${g7pf(hi)}`]),`LCM = ${Lc}`],space:40};
   }},
   {type:'boxes',key:'q3',skill:'Perfect squares and cubes',thinking:true,eoy:'EOY P2 Q2(b)(ii)',gen:(rng)=>{
     const cube=rng()<0.5,m=cube?3:2;let f,N,n;
@@ -2024,7 +2048,7 @@ Object.assign(QUESTS,{
     return {prompt:`${N} = ${g7pf(f)}. Find the smallest whole number n such that ${N}n is a perfect ${cube?'cube':'square'}.`,
       tpl:['n = ',{b:0}],ans:[n],
       hint:`In a perfect ${cube?'cube':'square'}, every power must be a multiple of ${m}. Which powers are not yet? What must you multiply by to fix them?`,
-      solution:[`${N} = ${g7pf(f)}`,`Every power must be a multiple of ${m}.`,`${N}n = ${g7pf(after)}`,`n = ${g7pf(need)}`,`n = ${n}`],space:40};
+      solution:[`${N} = ${g7pf(f)}`,`Every power must be a multiple of ${m}.`,`${N}n = ${g7pf(after)}`,...(g7pf(need)===String(n)?[]:[`n = ${g7pf(need)}`]),`n = ${n}`],space:40};
   }},
   {type:'boxes',key:'q4',skill:'LCM in real life',eoy:'EOY P1 Q7',gen:(rng)=>{
     let A,B,Lc;do{A=g7pick(rng,[6,8,9,10,12,15,16,18,20]);B=g7pick(rng,[6,8,9,10,12,15,16,18,20]);Lc=g7lcm(A,B);}while(A===B||Lc>90||Lc===A*B&&Lc>80||Lc===Math.max(A,B));
@@ -2032,7 +2056,7 @@ Object.assign(QUESTS,{
     return {prompt:`At a school carnival, a bubble machine operates every ${A} minutes and a confetti machine every ${B} minutes. Both operate together at ${H}.00 p.m. (a) How many minutes pass before they next operate together? (b) At what time is that?`,
       tpl:['(a) ',{b:0},' min   (b) ',{b:1},'.',{b:2},' p.m.'],ans:[Lc,hh,mm],
       hint:'"Next at the same time" is a clue word. Is it the HCF or the LCM? List a few multiples of each if it helps.',
-      solution:[`Multiples of ${A}: ${[1,2,3,4].map(i=>A*i).join(', ')}, ...`,`Multiples of ${B}: ${[1,2,3,4].map(i=>B*i).join(', ')}, ...`,`LCM = ${Lc} minutes`,`${H}.00 p.m. + ${Lc} min`,`= ${hh}.${String(mm).padStart(2,'0')} p.m.`],space:40};
+      solution:[`Multiples of ${A}: ${Array.from({length:Lc/A},(_,i)=>A*(i+1)).join(', ')}`,`Multiples of ${B}: ${Array.from({length:Lc/B},(_,i)=>B*(i+1)).join(', ')}`,`LCM = ${Lc} minutes`,`${H}.00 p.m. + ${Lc} min`,`= ${hh}.${String(mm).padStart(2,'0')} p.m.`],space:40};
   }},
   {type:'ref',key:'tb',pool:'auto',tag:'Throwback'}
 ]},
@@ -2069,13 +2093,13 @@ Object.assign(QUESTS,{
   {type:'boxes',key:'q3',skill:'Commission',eoy:'EOY P2 Q4(a)',gen:(rng)=>{
     const r1=g7pick(rng,[1,1.5,2]),r2=g7pick(rng,[0.5,0.75,0.8]),P=ri(rng,30,120)*10000;
     const c1=r1/100*100000,c2=r2/100*(P-100000),C=rdp(c1+c2,2);
-    return {prompt:`A property agent receives ${r1}% commission on the first $100 000 and ${r2}% on the rest of the selling price. A property is sold for $${P.toLocaleString('en-US').replace(/,/g,' ')}. Find the commission.`,
+    return {prompt:`A property agent receives ${r1}% commission on the first $100 000 and ${r2}% on the rest of the selling price. A property is sold for $${g7money(P)}. Find the commission.`,
       tpl:['$',{b:0}],ans:[C],tol:0.006,
       hint:'Split the price into two parts. How much of it earns the first rate? How much is left for the second rate?',
-      solution:[`${r1}% of $100 000 = $${rdp(c1,2)}`,`Rest = $${P-100000}`,`${r2}% of $${P-100000} = $${rdp(c2,2)}`,`Commission = $${rdp(c1,2)} + $${rdp(c2,2)}`,`= $${C}`],space:44};
+      solution:[`${r1}% of $100 000 = $${rdp(c1,2)}`,`Rest = $${g7money(P-100000)}`,`${r2}% of $${g7money(P-100000)} = $${g7money(rdp(c2,2))}`,`Commission = $${rdp(c1,2)} + $${rdp(c2,2)}`,`= $${C}`],space:44};
   }},
   {type:'boxes',key:'q4',skill:'Discount',thinking:true,eoy:'EOY P2 Q4(b)',gen:(rng)=>{
-    let n,p,tot;do{n=ri(rng,3,7);p=ri(rng,590,1290)/100;tot=rdp(n*p,2);}while(Math.abs(tot-50)>25||Math.abs(tot-50)<0.5);
+    let n,pc,p,tot;do{n=ri(rng,3,7);pc=ri(rng,118,258)*5;p=pc/100;tot=rdp(n*p,2);}while(Math.abs(tot-50)>25||Math.abs(tot-50)<0.5||(n*pc)%20!==0); // discounted totals are whole cents
     const big=tot>50,rate=big?15:10,paid=rdp(tot*(100-rate)/100,2);
     const M=Math.ceil(paid/5)*5+g7pick(rng,[5,10]);
     return {prompt:`Members get 10% discount, or 15% discount if the total before discount is more than $50. Amirah is a member with $${M}. She buys ${n} books at $${p.toFixed(2)} each. How much money does she have left?`,
@@ -2128,13 +2152,13 @@ Object.assign(QUESTS,{
       solution:[`${m} min = \\f{${m}}{60} h`,`First part: ${v1} × \\f{${m}}{60} = ${d1} km`,`Distance left = ${D} − ${d1} = ${d2} km`,`Time left = ${TM} − ${m} = ${r} min = \\f{${r}}{60} h`,`Speed = ${d2} ÷ \\f{${r}}{60}`,`= ${v2} km/h`],space:56};
   }},
   {type:'boxes',key:'q3',skill:'Average speed for a journey',eoy:'EOY P2 Q3(b)',gen:(rng)=>{
-    const D=ri(rng,80,160),T=g7pick(rng,[1.5,2,2.5]),extra=g7pick(rng,[20,30,40]);
+    const D=ri(rng,80,160),T=g7pick(rng,[1.5,2,2.5]),extra=g7pick(rng,[20,30,40]),Tm=T*60,Trm=Tm+extra;
     const Tr=T+extra/60,v1=D/Tr,v2=2*D/(T+Tr);
     const hm=x=>{const h=Math.floor(x),mi=Math.round((x%1)*60);return mi?`${h} h ${mi} min`:`${h} h`;};
     return {prompt:`A trip from P to Q is ${D} km and takes ${hm(T)}. The return trip takes ${extra} minutes longer. Find the average speed for (a) the return trip, (b) the whole journey. Give your answers correct to 3 significant figures.`,
       tpl:['(a) ',{b:0},' km/h   (b) ',{b:1},' km/h'],ans:[rsf(v1,3),rsf(v2,3)],tol:Math.min(sfTol(v1),sfTol(v2)),
       hint:'How long does the return trip take, in hours? For the whole journey, what is the total distance and the total time?',
-      solution:[`Return time = ${hm(T)} + ${extra} min = ${rdp(Tr,4)} h`,`(a) ${D} ÷ ${rdp(Tr,4)}`,`= ${rsf(v1,3)} km/h`,`Total distance = 2 × ${D} = ${2*D} km`,`Total time = ${T} + ${rdp(Tr,4)} = ${rdp(T+Tr,4)} h`,`(b) ${2*D} ÷ ${rdp(T+Tr,4)}`,`= ${rsf(v2,3)} km/h`],space:50};
+      solution:[`Return time = ${hm(T)} + ${extra} min = ${Trm} min`,`= ${g7h(Trm)} h`,`(a) ${D} ÷ ${g7h(Trm)}`,`= ${g7sf(v1,3)} km/h`,`Total distance = 2 × ${D} = ${2*D} km`,`Total time = ${g7h(Tm)} + ${g7h(Trm)} = ${g7h(Tm+Trm)} h`,`(b) ${2*D} ÷ ${g7h(Tm+Trm)}`,`= ${g7sf(v2,3)} km/h`],space:50};
   }},
   {type:'mcq',key:'q4',skill:'Average speed thinking',thinking:true,gen:(rng)=>{
     const [a,b]=g7pick(rng,[[60,40],[30,60],[20,30],[60,90],[45,90],[36,60],[40,60],[30,45]]);
@@ -2142,7 +2166,7 @@ Object.assign(QUESTS,{
     const list=[`No. It is ${hm} km/h`,`Yes. It is ${am} km/h`,`No. It is ${a+b} km/h`,`No. It is ${Math.abs(a-b)} km/h`];
     const m=g7mcq(rng,list);
     return {prompt:`Kai cycles to the park at ${a} km/h and back home along the same road at ${b} km/h. He says his average speed for the whole trip is ${am} km/h. Is he right?`,opts:m.opts,correct:m.correct,
-      hint:'Pick a distance, like 120 km each way, so the numbers are easy. How long does each part take? Then use total distance ÷ total time.',
+      hint:'Pick a distance, like 360 km each way, so the numbers are easy. How long does each part take? Then use total distance ÷ total time.',
       solution:[`Try 360 km each way.`,`Time there = \\f{360}{${a}} = ${360/a} h`,`Time back = \\f{360}{${b}} = ${360/b} h`,`Average speed = \\f{720}{${360/a+360/b}}`,`= ${hm} km/h`,'He is wrong: the slower part takes more time.'],space:40};
   }},
   {type:'ref',key:'tb',pool:'auto',tag:'Throwback'}
@@ -2191,6 +2215,10 @@ function g8poly(A,B,n,sgn){
   for(let i=2;i<n;i++){dir+=sgn*2*Math.PI/n;const p=v[v.length-1];v.push([p[0]+s*Math.cos(dir),p[1]+s*Math.sin(dir)]);}
   return v;
 }
+const g8sf=(x,n=3)=>{const a=Math.abs(x);const t=a>=Math.pow(10,n)?String(rsf(a,n)):a.toPrecision(n);return (x<0?'−':'')+t;}; // keeps zeros
+const g8an=w=>(/^[aeiou]/i.test(w)?'an ':'a ')+w;
+/* trapezium shapes: offset xA, height h, slant s (a triple), diameter d; end gap g = xA − d/2 keeps the end semicircles inside */
+const G8SH=[{xA:5,h:12,s:13,d:8},{xA:3.5,h:12,s:12.5,d:6},{xA:6,h:8,s:10,d:6},{xA:9,h:12,s:15,d:10}];
 const PNAME={5:'pentagon',6:'hexagon',8:'octagon',9:'nonagon',10:'decagon',12:'dodecagon'};
 
 function g8arc(cx,cy,r,a0,a1,n=24){const o=[];for(let i=0;i<=n;i++){const t=(a0+(a1-a0)*i/n)*DEG8;o.push([cx+r*Math.cos(t),cy+r*Math.sin(t)]);}return o;}
@@ -2285,7 +2313,7 @@ Object.assign(QUESTS,{
     const m=g8mcq(rng,list);
     return {prompt:`Each exterior angle of a regular polygon tile is ${e}°. Jane says the tile is a regular ${PNAME[claim]}. Is she correct?`,opts:m.opts,correct:m.correct,
       hint:'What do all the exterior angles of a polygon add up to? How many angles of '+e+'° fit into that total?',
-      solution:['Sum of exterior angles = 360°',`Number of sides = \\f{360°}{${e}°}`,`= ${n}`,`It is a regular ${PNAME[n]}, not a ${PNAME[claim]}.`,'Jane is not correct.'],space:30};
+      solution:['Sum of exterior angles = 360°',`Number of sides = \\f{360°}{${e}°}`,`= ${n}`,`It is a regular ${PNAME[n]}, not ${g8an(PNAME[claim])}.`,'Jane is not correct.'],space:30};
   }},
   {type:'boxes',key:'q2',skill:'Interior angles',eoy:'EOY P2 Q7(a)',gen:(rng)=>{
     const n=g8pick(rng,[5,6,8,9,10,12,15,18,20]),e=360/n;
@@ -2339,25 +2367,25 @@ Object.assign(QUESTS,{
     const sp={xmin:-r-1.2,xmax:r+1.2,ymin:-1.6,ymax:r+0.8,equal:true,W:420,pad:6,items:[
       {k:'path',pts:[...g8arc(0,0,r,0,180,48),[r,0]],closed:true,c:'tri'},{k:'label',x:0,y:-0.85,t:d+' cm',size:20}]};
     return {prompt:`A semicircle has diameter ${d} cm. Find (a) its area, (b) its perimeter. Give your answers correct to 3 significant figures.`,diagram:sp,
-      tpl:['(a) ',{b:0},' cm^{2}   (b) ',{b:1},' cm'],ans:[rsf(A,3),rsf(P,3)],tol:Math.min(sfTol(A),sfTol(P)),
+      tpl:['(a) ',{b:0},' cm^{2}   (b) ',{b:1},' cm'],ans:[rsf(A,3),rsf(P,3)],tol:Math.min(sfTol(A),sfTol(P)),note:'Keep any zeros needed for 3 s.f.',
       hint:'What is the radius? A semicircle is half a circle. For the perimeter, did you include the straight edge?',
-      solution:[`r = ${d} ÷ 2 = ${r} cm`,`(a) Area = \\f{1}{2} × π × ${r}^{2}`,`= ${rsf(A,3)} cm^{2}`,`(b) Curved edge = π × ${r} = ${rdp(Math.PI*r,3)} cm`,`Perimeter = ${rdp(Math.PI*r,3)} + ${d}`,`= ${rsf(P,3)} cm`],space:40};
+      solution:[`r = ${d} ÷ 2 = ${r} cm`,`(a) Area = \\f{1}{2} × π × ${r}^{2}`,`= ${g8sf(A)} cm^{2}`,`(b) Curved edge = π × ${r} = ${rdp(Math.PI*r,3)} cm`,`Perimeter = ${rdp(Math.PI*r,3)} + ${d}`,`= ${g8sf(P)} cm`],space:40};
   }},
   {type:'boxes',key:'q3',skill:'Area of a composite shape',thinking:true,eoy:'EOY P2 Q8(a)',gen:(rng)=>{
-    const [hd,h,s]=g8pick(rng,[[3.5,12,12.5],[5,12,13],[2.5,6,6.5]]),d=2*hd,r=hd;
-    const A=0.5*(2*d+3*d)*h-5*0.5*Math.PI*r*r;
-    return {prompt:`ABDE is a trapezium with AB parallel to ED. AB = ${2*d} cm, AE = BD = ${s} cm and the height is ${h} cm. Five equal semicircles are cut out: 2 along AB and 3 along ED. Find the area of the shape that is left, correct to 3 significant figures.`,
-      diagram:g8trap(d,h,s),tpl:['Area = ',{b:0},' cm^{2}'],ans:[rsf(A,3)],tol:sfTol(A),
-      hint:'AB is made of 2 diameters. How long is one diameter? How long is ED then? Find the trapezium area and take away 5 semicircles.',
-      solution:[`Diameter = ${2*d} ÷ 2 = ${d} cm, radius = ${r} cm`,`ED = 3 × ${d} = ${3*d} cm`,`Trapezium = \\f{1}{2}(${2*d} + ${3*d}) × ${h} = ${0.5*5*d*h} cm^{2}`,`5 semicircles = 5 × \\f{1}{2} × π × ${r}^{2} = ${rdp(2.5*Math.PI*r*r,3)} cm^{2}`,`Area = ${0.5*5*d*h} − ${rdp(2.5*Math.PI*r*r,3)}`,`= ${rsf(A,3)} cm^{2}`],space:50};
+    const S=g8pick(rng,G8SH),d=S.d,r=d/2,AB=2*d,ED=2*d+2*S.xA,h=S.h;
+    const T=0.5*(AB+ED)*h,C=2.5*Math.PI*r*r,A=T-C;
+    return {prompt:`ABDE is a trapezium with AB parallel to ED. AB = ${AB} cm, ED = ${ED} cm, AE = BD = ${S.s} cm and the height is ${h} cm. Five equal semicircles are cut out: 2 fill AB, and 3 sit on ED with equal gaps at both ends. Find the area of the shape that is left, correct to 3 significant figures.`,
+      diagram:g8trap(S),tpl:['Area = ',{b:0},' cm^{2}'],ans:[rsf(A,3)],tol:sfTol(A),note:'Keep any zeros needed for 3 s.f.',
+      hint:'The 2 semicircles fill AB exactly. How long is one diameter? Then find the trapezium area and take away 5 semicircles.',
+      solution:[`Diameter = ${AB} ÷ 2 = ${d} cm`,`Radius = ${r} cm`,`Trapezium = \\f{1}{2}(${AB} + ${ED}) × ${h}`,`= ${T} cm^{2}`,`5 semicircles = 5 × \\f{1}{2} × π × ${r}^{2}`,`= ${g8sf(C,5)} cm^{2}`,`Area left = ${T} − ${g8sf(C,5)}`,`= ${g8sf(A)} cm^{2}`],space:56};
   }},
   {type:'boxes',key:'q4',skill:'Perimeter of a composite shape',eoy:'EOY P2 Q8(b)',gen:(rng)=>{
-    const [hd,h,s]=g8pick(rng,[[3.5,12,12.5],[5,12,13],[2.5,6,6.5]]),d=2*hd,r=hd;
-    const P=2*s+5*Math.PI*r;
-    return {prompt:`The same kind of shape: AB = ${2*d} cm, AE = BD = ${s} cm, height ${h} cm, with 5 equal semicircles cut out. Find the perimeter of the shape, correct to 3 significant figures.`,
-      diagram:g8trap(d,h,s),tpl:['Perimeter = ',{b:0},' cm'],ans:[rsf(P,3)],tol:sfTol(P),
-      hint:'Trace the outside edge with your finger. Which straight edges are still there? How many curved edges are there?',
-      solution:['Outside edge = AE + BD + 5 curved edges',`Each curved edge = π × ${r} = ${rdp(Math.PI*r,3)} cm`,`Perimeter = ${s} + ${s} + 5 × ${rdp(Math.PI*r,3)}`,`= ${rsf(P,3)} cm`],space:40};
+    const S=g8pick(rng,G8SH),d=S.d,r=d/2,AB=2*d,ED=2*d+2*S.xA,h=S.h,g=S.xA-r,arc=Math.PI*r;
+    const P=2*S.s+5*arc+2*g;
+    return {prompt:`ABDE is a trapezium with AB parallel to ED. AB = ${AB} cm, ED = ${ED} cm, AE = BD = ${S.s} cm and the height is ${h} cm. Five equal semicircles are cut out: 2 fill AB, and 3 sit on ED with equal gaps at both ends. Find the perimeter of the shape that is left, correct to 3 significant figures.`,
+      diagram:g8trap(S),tpl:['Perimeter = ',{b:0},' cm'],ans:[rsf(P,3)],tol:sfTol(P),note:'Keep any zeros needed for 3 s.f.',
+      hint:'Trace the outside edge with your finger. Which straight pieces are still there? How many curved edges are there?',
+      solution:[`Diameter = ${AB} ÷ 2 = ${d} cm, radius = ${r} cm`,`Gaps on ED = ${ED} − 3 × ${d} = ${ED-3*d} cm`,`Each curved edge = π × ${r} = ${g8sf(arc,5)} cm`,`Perimeter = ${S.s} + ${S.s} + 5 × ${g8sf(arc,5)} + ${ED-3*d}`,`= ${g8sf(P)} cm`],space:48};
   }},
   {type:'ref',key:'tb',pool:'auto',tag:'Throwback'}
 ]},
@@ -2385,7 +2413,7 @@ Object.assign(QUESTS,{
     return {prompt:'Find the percentage of students who travel by bus. Give your answer correct to 3 significant figures if needed.',diagram:g8pieSpec(q),pdfPrompt:'Use the pie chart in Question 1. Find the percentage of students who travel by bus, correct to 3 significant figures if needed.',pdfNoDiagram:true,
       tpl:['',{b:0},' %'],ans:[rsf(p,3)],tol:sfTol(p),
       hint:'What fraction of the circle is the bus sector? How do you change a fraction into a percentage?',
-      solution:[`Percentage = \\f{${q.b}}{360} × 100%`,`= ${rsf(p,3)}%`],space:26};
+      solution:[`Percentage = \\f{${q.b}}{360} × 100%`,`= ${Number.isInteger(rdp(p,6))?rdp(p,6):g8sf(p)}%`],space:26};
   }},
   {type:'boxes',key:'q4',skill:'Using the difference',thinking:true,eoy:'EOY P2 Q9(d)',gen:(rng,q)=>{
     const left=q.T-q.n(q.m)-q.n(q.b)-q.n(q.x),diff=q.n(q.dd),walk=(left-diff)/2;
@@ -2409,15 +2437,17 @@ Object.assign(QUESTS,{
 });
 
 /* trapezium ABDE with 2 semicircles cut from AB and 3 from ED */
-function g8trap(d,h,s){
-  const r=d/2,E=[0,0],D=[3*d,0],B=[2.5*d,h],A=[0.5*d,h],F=[0.5*d,0];
-  const out=[];
-  for(let i=0;i<3;i++)out.push(...g8arc(r+i*d,0,r,180,0,24));        // bottom arcs bulge up
-  out.push(B);
-  for(let i=1;i>=0;i--)out.push(...g8arc(d+i*d,h,r,0,-180,24));     // top arcs bulge down
+function g8trap(S){
+  const d=S.d,r=d/2,h=S.h,g=S.xA-r,ED=2*d+2*S.xA;
+  const E=[0,0],D=[ED,0],A=[S.xA,h],B=[S.xA+2*d,h],F=[S.xA,0];
+  const out=[E,[g,0]];
+  for(let i=0;i<3;i++)out.push(...g8arc(g+r+i*d,0,r,180,0,24));      // bottom arcs bulge up
+  out.push(D,B);
+  for(let i=1;i>=0;i--)out.push(...g8arc(S.xA+r+i*d,h,r,0,-180,24));  // top arcs bulge down
+  out.push(A,E);
   return triDiagram({pts:{A,B,D,E,F},hide:['F'],dashed:[['A','F'],['E','D'],['A','B']],
-    sides:[['A','B',2*d+' cm'],['A','E',s+' cm'],['A','F',h+' cm',true]],margin:3.4,
-    extra:[{k:'path',pts:[...out,A,E],c:'tri'}]});
+    sides:[['A','B',2*d+' cm'],['E','D',ED+' cm'],['A','E',S.s+' cm'],['A','F',h+' cm',true]],margin:3.4,
+    extra:[{k:'path',pts:out,c:'tri'}]});
 }
 })();
 
